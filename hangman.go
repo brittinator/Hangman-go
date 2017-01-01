@@ -3,6 +3,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -22,6 +23,7 @@ type Hangman struct {
 	currentWordState, guesses []string
 	maxGuesses, numOfTries    int
 	word                      string
+	verbose                   bool
 }
 
 func getWord() string {
@@ -50,7 +52,9 @@ func (h *Hangman) getGuess() string {
 		fmt.Println("You've already guesses that letter. Please select another one.")
 		return ""
 	}
-	fmt.Printf("This guess %v \n", guess)
+	if h.verbose {
+		fmt.Printf("This guess %v \n", guess)
+	}
 	h.numOfTries++
 	h.guesses = append(h.guesses, guess)
 	return guess
@@ -58,10 +62,14 @@ func (h *Hangman) getGuess() string {
 
 func (h *Hangman) isMatch(guess string) bool {
 	if strings.Contains(h.word, guess) {
-		fmt.Printf("%v is a match for %v word \n", guess, h.word)
+		if h.verbose {
+			fmt.Printf("%v is a match for %v word \n", guess, h.word)
+		}
 		return true
 	}
-	fmt.Printf("%v is NOT a match for %v word \n", guess, h.word)
+	if h.verbose {
+		fmt.Printf("%v is NOT a match for %v word \n", guess, h.word)
+	}
 	return false
 }
 
@@ -91,7 +99,6 @@ func (h *Hangman) continueGame() bool {
 		fmt.Println("you've finished your hangman game, and you've won, congrats!")
 		return false
 	}
-	fmt.Println("continue playing...")
 	return true
 }
 
@@ -99,14 +106,23 @@ func main() {
 	// for choosing a random word
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	fmt.Println("Welcome to Hangman")
+	verbose := flag.Bool("v", false, "verbose mode for debugging purposes")
+	flag.Parse()
+
+	fmt.Printf(
+		`Welcome to Hangman!
+    I will choose a random word, and you will guess letters you think the word contains.
+    You have %v guesses`, maxGuesses)
 
 	game := Hangman{
 		word:       getWord(),
 		maxGuesses: maxGuesses,
+		verbose:    *verbose,
 	}
 	game.updateWordState(" ")
-	fmt.Printf("Word: %v \n", game.word)
+	if game.verbose {
+		fmt.Printf("Word: %v \n", game.word)
+	}
 
 	for game.continueGame() {
 		game.drawBoard()
