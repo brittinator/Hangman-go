@@ -8,9 +8,11 @@ import (
 	"math/rand"
 	"os"
 	"strings"
+	"time"
 )
 
-var words = []string{"apple", "banana", "cat"}
+// TODO: call words from a elementary dictionary API
+var words = []string{"apple", "banana", "cat", "dilapidated"}
 
 const maxGuesses = 7
 
@@ -23,7 +25,6 @@ type Hangman struct {
 }
 
 func getWord() string {
-	// rand.Intn doesn't seem random after it runs once
 	return words[rand.Intn(len(words))]
 }
 
@@ -91,6 +92,9 @@ func (h *Hangman) continueGame() bool {
 }
 
 func main() {
+	// for choosing a random word
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	fmt.Println("Welcome to Hangman")
 
 	game := Hangman{
@@ -102,11 +106,9 @@ func main() {
 	fmt.Printf("Word: %v \n", game.word)
 
 	for game.continueGame() {
-		fmt.Println("BEGIN LOOP")
 		game.drawBoard()
 		guess := game.getGuess()
-		isMatch := game.isMatch(guess)
-		if isMatch {
+		if game.isMatch(guess) {
 			game.updateWordState(guess)
 		}
 	}
