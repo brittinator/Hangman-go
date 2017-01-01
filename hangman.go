@@ -1,4 +1,4 @@
-// time spent:  2hrs
+// time spent:  3hrs
 package main
 
 import (
@@ -19,9 +19,9 @@ const maxGuesses = 7
 // Hangman is the game object you instantiate
 // when creating a new Hangman game
 type Hangman struct {
-	currentWordState, guesses              []string
-	matchedLetters, maxGuesses, numOfTries int
-	word                                   string
+	currentWordState, guesses []string
+	maxGuesses, numOfTries    int
+	word                      string
 }
 
 func getWord() string {
@@ -45,6 +45,10 @@ func (h *Hangman) getGuess() string {
 	if guess == "" {
 		fmt.Println("please enter a letter")
 		return guess
+	}
+	if strings.Contains(strings.Join(h.guesses, ""), guess) {
+		fmt.Println("You've already guesses that letter. Please select another one.")
+		return ""
 	}
 	fmt.Printf("This guess %v \n", guess)
 	h.numOfTries++
@@ -100,7 +104,6 @@ func main() {
 	game := Hangman{
 		word:       getWord(),
 		maxGuesses: maxGuesses,
-		numOfTries: 0,
 	}
 	game.updateWordState(" ")
 	fmt.Printf("Word: %v \n", game.word)
