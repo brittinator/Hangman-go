@@ -1,4 +1,4 @@
-// time spent: 90 minutes
+// time spent:  2hrs
 package main
 
 import (
@@ -17,16 +17,9 @@ const maxGuesses = 7
 // Hangman is the game object you instantiate
 // when creating a new Hangman game
 type Hangman struct {
-	guesses        string
-	matchedLetters int
-	maxGuesses     int
-	numOfTries     int
-	word           string
-}
-
-func (h *Hangman) play() {
-	h.drawBoard()
-	h.getGuess()
+	currentWordState, guesses              []string
+	matchedLetters, maxGuesses, numOfTries int
+	word                                   string
 }
 
 func getWord() string {
@@ -34,34 +27,54 @@ func getWord() string {
 	return words[rand.Intn(len(words))]
 }
 
+// TODO: use http/template package to pretty this up and standardize it
 func (h *Hangman) drawBoard() {
-	fmt.Println("inside drawBoard")
-	h.matchedLetters = 0
 	fmt.Printf("Guesses left: %v \n", h.maxGuesses-h.numOfTries)
-	for _, letter := range h.guesses {
-		fmt.Printf("Letters you've tried: %v", letter)
-	}
-	fmt.Printf("\n")
-
-	for _, l := range h.word {
-		if strings.ContainsRune(h.guesses, l) {
-			h.matchedLetters++
-			fmt.Printf("%#v", l)
-		} else {
-			fmt.Printf("_")
-		}
-	}
-	fmt.Printf("\n")
+	fmt.Printf("Guesses: %v \n", h.guesses)
+	fmt.Println(h.currentWordState)
 }
 
-func (h *Hangman) getGuess() {
+func (h *Hangman) getGuess() string {
 	reader := bufio.NewReader(os.Stdin)
 	guess, err := reader.ReadString('\n')
 	if err != nil {
 		log.Fatal(err)
 	}
+	guess = strings.TrimSpace(guess)
+	if guess == "" {
+		fmt.Println("please enter a letter")
+		return guess
+	}
+	fmt.Printf("This guess %v \n", guess)
 	h.numOfTries++
-	h.guesses += guess
+	h.guesses = append(h.guesses, guess)
+	return guess
+}
+
+func (h *Hangman) isMatch(guess string) bool {
+	if strings.Contains(h.word, guess) {
+		fmt.Printf("%v is a match for %v word \n", guess, h.word)
+		return true
+	}
+	fmt.Printf("%v is NOT a match for %v word \n", guess, h.word)
+	return false
+}
+
+// updateWordState grabs the indices of each matched letter and
+// replaces the "-" with the letter
+func (h *Hangman) updateWordState(letter string) {
+	// initialize state
+	if letter == " " {
+		for i := 0; i < len(h.word); i++ {
+			h.currentWordState = append(h.currentWordState, "_")
+		}
+	} else {
+		for i, l := range h.word {
+			if letter == string(l) {
+				h.currentWordState[i] = letter
+			}
+		}
+	}
 }
 
 func (h *Hangman) continueGame() bool {
@@ -69,7 +82,7 @@ func (h *Hangman) continueGame() bool {
 		fmt.Println("you've finished your hangman game, losing.")
 		return false
 	}
-	if h.matchedLetters == len(h.word) {
+	if strings.Join(h.currentWordState, "") == h.word {
 		fmt.Println("you've finished your hangman game, and you've won, congrats!")
 		return false
 	}
@@ -85,13 +98,16 @@ func main() {
 		maxGuesses: maxGuesses,
 		numOfTries: 0,
 	}
+	game.updateWordState(" ")
 	fmt.Printf("Word: %v \n", game.word)
 
-	continueGame := game.continueGame()
-
-	if continueGame {
-		game.play()
-		fmt.Println("at end of continueGame loop")
-		continueGame = game.continueGame()
+	for game.continueGame() {
+		fmt.Println("BEGIN LOOP")
+		game.drawBoard()
+		guess := game.getGuess()
+		isMatch := game.isMatch(guess)
+		if isMatch {
+			game.updateWordState(guess)
+		}
 	}
 }
